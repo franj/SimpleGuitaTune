@@ -1,4 +1,4 @@
-# 🎸 simpleguitatune
+# 🎸 SimpleGuitaTune
 
 一个运行在浏览器中的极简吉他调音工具，无需安装，打开即用。
 
@@ -6,7 +6,7 @@
 
 ## 🔗 在线使用
 
-👉 [**点击此处直接运行调音器**](https://franj.github.io/simpleguitatune/simpleguitatune.html)
+👉 [**点击此处直接运行调音器**](https://franj.github.io/SimpleGuitaTune/index.html)
 
 ---
 
@@ -23,5 +23,5 @@
 ## 📸 界面预览
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/7849d1f7-6180-4591-85dc-baf4a1167250" alt="simpleguitatune 界面截图" width="360" />
+  <img src="https://github.com/user-attachments/assets/7849d1f7-6180-4591-85dc-baf4a1167250" alt="SimpleGuitaTune 界面截图" width="360" />
 </div>
