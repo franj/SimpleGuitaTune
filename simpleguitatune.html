@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简吉他调音器</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-color: #1a1a1e;
+            --text-color: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --primary: #06b6d4;
+            --primary-hover: #0891b2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--card-color);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2e2e33;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        /* 步骤区域 */
+        .step-section {
+            margin-bottom: 20px;
+        }
+
+        .step-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 按钮网格 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background-color: #27272a;
+            border: 1px solid #3f3f46;
+            color: var(--text-color);
+            padding: 10px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            border-color: var(--primary);
+        }
+
+        .btn.active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* 品位选择 */
+        .fret-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* 快捷组合提示 */
+        .preset-container {
+            background-color: #202024;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 25px;
+            border: 1px dashed #3f3f46;
+        }
+
+        .preset-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .preset-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .chip {
+            background-color: #2d2d30;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .chip:hover {
+            border-color: var(--primary);
+        }
+
+        .chip.active {
+            background-color: rgba(6, 182, 212, 0.2);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* 控制按钮 */
+        .main-action {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            background-color: var(--primary);
+            color: #121214;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 25px;
+        }
+
+        .main-action:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .main-action.recording {
+            background-color: var(--danger);
+            color: #fff;
+        }
+
+        /* 调音面板 */
+        .tuner-panel {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .target-info {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .freq-display {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+
+        /* 提示指令 */
+        .instruction {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            min-height: 30px;
+            transition: color 0.2s;
+        }
+
+        /* 仪表盘 */
+        .meter-container {
+            width: 100%;
+            height: 20px;
+            background-color: #27272a;
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .meter-center {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #3f3f46;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        .meter-pointer {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 8px;
+            margin-left: -4px;
+            background-color: var(--text-secondary);
+            border-radius: 4px;
+            transition: left 0.1s ease-out, background-color 0.2s;
+            z-index: 3;
+        }
+
+        /* 示波器 */
+        canvas {
+            width: 100%;
+            height: 80px;
+            background-color: #16161a;
+            border-radius: 10px;
+            border: 1px solid #27272a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎸 极简吉他调音器</h1>
+
+    <!-- 弦选择 -->
+    <div class="step-section">
+        <div class="step-title">
+            <span>第一步：选择琴弦</span>
+            <span id="selected-string-label" style="color: var(--primary);">6 弦 (E)</span>
+        </div>
+        <div class="grid" id="string-selector">
+            <button class="btn active" data-string="6">6弦</button>
+            <button class="btn" data-string="5">5弦</button>
+            <button class="btn" data-string="4">4弦</button>
+            <button class="btn" data-string="3">3弦</button>
+            <button class="btn" data-string="2">2弦</button>
+            <button class="btn" data-string="1">1弦</button>
+        </div>
+    </div>
+
+    <!-- 品选择 -->
+    <div class="step-section">
+        <div class="step-title">
+            <span>第二步：按下品位</span>
+            <span id="selected-fret-label" style="color: var(--primary);">空弦 (0品)</span>
+        </div>
+        <div class="grid fret-grid" id="fret-selector">
+            <button class="btn active" data-fret="0">空弦 (0)</button>
+            <button class="btn" data-fret="4">4品</button>
+            <button class="btn" data-fret="5">5品</button>
+            <button class="btn" data-fret="custom">自定义</button>
+        </div>
+        <!-- 自定义品位输入框 (默认隐藏) -->
+        <div id="custom-fret-container" style="display: none; margin-top: 10px; text-align: right;">
+            <label style="font-size: 13px; color: var(--text-secondary); margin-right: 8px;">品位：</label>
+            <input type="number" id="custom-fret-input" min="0" max="24" value="0" style="background: #27272a; border: 1px solid #3f3f46; color: #fff; padding: 4px 8px; border-radius: 4px; width: 60px;">
+        </div>
+    </div>
+
+    <!-- 常用组合快捷键 -->
+    <div class="preset-container">
+        <div class="preset-title">💡 常用调音组合快捷选择：</div>
+        <div class="preset-chips" id="preset-list">
+            <div class="chip active" data-preset="standard">标准空弦调音</div>
+            <div class="chip" data-preset="5th-6">6弦5品法 (对准A2 110Hz)</div>
+            <div class="chip" data-preset="5th-5">5弦5品法 (对准D3 146.8Hz)</div>
+            <div class="chip" data-preset="5th-4">4弦5品法 (对准G3 196Hz)</div>
+            <div class="chip" data-preset="5th-3">3弦4品法 (对准B3 246.9Hz)</div>
+            <div class="chip" data-preset="5th-2">2弦5品法 (对准E4 329.6Hz)</div>
+        </div>
+    </div>
+
+    <!-- 开始录音按钮 -->
+    <button class="main-action" id="start-btn">开启麦克风调音</button>
+
+    <!-- 调音与分析面板 -->
+    <div class="tuner-panel">
+        <div class="target-info" id="target-info">目标频率: 82.41 Hz (E2)</div>
+        <div class="freq-display" id="freq-display">--.- Hz</div>
+        <div class="instruction" id="instruction">等待声音输入...</div>
+
+        <!-- 刻度偏离表 -->
+        <div class="meter-container">
+            <div class="meter-center"></div>
+            <div class="meter-pointer" id="meter-pointer"></div>
+        </div>
+
+        <!-- 示波器 -->
+        <canvas id="visualizer"></canvas>
+    </div>
+</div>
+
+<script>
+    // 吉他各弦的标准空弦基准频率
+    const BASE_FREQS = {
+        6: 82.41,  // E2
+        5: 110.00, // A2
+        4: 146.83, // D3
+        3: 196.00, // G3
+        2: 246.94, // B3
+        1: 329.63  // E4
+    };
+
+    const NOTE_NAMES = {
+        6: 'E2',
+        5: 'A2',
+        4: 'D3',
+        3: 'G3',
+        2: 'B3',
+        1: 'E4'
+    };
+
+    let selectedString = 6;
+    let selectedFret = 0;
+    let targetFreq = 82.41;
+
+    // 音频上下文相关
+    let audioCtx = null;
+    let analyser = null;
+    let sourceNode = null;
+    let stream = null;
+    let isListening = false;
+    let animationId = null;
+
+    // 缓存 DOM 节点
+    const stringBtns = document.querySelectorAll('#string-selector .btn');
+    const fretBtns = document.querySelectorAll('#fret-selector .btn');
+    const presetChips = document.querySelectorAll('#preset-list .chip');
+    const startBtn = document.getElementById('start-btn');
+    const freqDisplay = document.getElementById('freq-display');
+    const instruction = document.getElementById('instruction');
+    const targetInfo = document.getElementById('target-info');
+    const meterPointer = document.getElementById('meter-pointer');
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    const customFretContainer = document.getElementById('custom-fret-container');
+    const customFretInput = document.getElementById('custom-fret-input');
+
+    // 调整 Canvas 分辨率
+    function resizeCanvas() {
+        canvas.width = canvas.clientWidth * window.devicePixelRatio;
+        canvas.height = canvas.clientHeight * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // 更新目标频率计算：基准频率 * 2^(品数/12)
+    function updateTarget() {
+        const base = BASE_FREQS[selectedString];
+        targetFreq = base * Math.pow(2, selectedFret / 12);
+        
+        // 更新 UI 提示
+        document.getElementById('selected-string-label').textContent = `${selectedString} 弦 (${NOTE_NAMES[selectedString]})`;
+        document.getElementById('selected-fret-label').textContent = selectedFret === 0 ? '空弦 (0品)' : `${selectedFret} 品`;
+        targetInfo.textContent = `目标频率: ${targetFreq.toFixed(2)} Hz`;
+
+        // 移除预设的高亮（如果手动修改了匹配）
+        checkPresetMatch();
+    }
+
+    // 手动选择弦
+    stringBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            stringBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedString = parseInt(btn.dataset.string);
+            updateTarget();
+        });
+    });
+
+    // 手动选择品位
+    fretBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            fretBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (btn.dataset.fret === 'custom') {
+                customFretContainer.style.display = 'block';
+                selectedFret = parseInt(customFretInput.value) || 0;
+            } else {
+                customFretContainer.style.display = 'none';
+                selectedFret = parseInt(btn.dataset.fret);
+            }
+            updateTarget();
+        });
+    });
+
+    customFretInput.addEventListener('input', () => {
+        selectedFret = parseInt(customFretInput.value) || 0;
+        updateTarget();
+    });
+
+    // 快捷调音组合
+    const presets = {
+        'standard': { string: 6, fret: 0 },
+        '5th-6': { string: 6, fret: 5 },
+        '5th-5': { string: 5, fret: 5 },
+        '5th-4': { string: 4, fret: 5 },
+        '5th-3': { string: 3, fret: 4 },
+        '5th-2': { string: 2, fret: 5 }
+    };
+
+    presetChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            presetChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            const presetKey = chip.dataset.preset;
+            if (presetKey === 'standard') {
+                // 标准调音，默认切到 6 弦 0 品，但允许用户点击其他弦
+                applySelection(6, 0);
+            } else {
+                const config = presets[presetKey];
+                applySelection(config.string, config.fret);
+            }
+        });
+    });
+
+    function applySelection(string, fret) {
+        selectedString = string;
+        selectedFret = fret;
+
+        // 更新按钮激活状态
+        stringBtns.forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.string) === string);
+        });
+
+        fretBtns.forEach(b => {
+            if (fret === 0 || fret === 4 || fret === 5) {
+                b.classList.toggle('active', b.dataset.fret === fret.toString());
+                customFretContainer.style.display = 'none';
+            } else {
+                b.classList.toggle('active', b.dataset.fret === 'custom');
+                customFretContainer.style.display = 'block';
+                customFretInput.value = fret;
+            }
+        });
+
+        updateTarget();
+    }
+
+    // 自动高亮匹配的预设
+    function checkPresetMatch() {
+        presetChips.forEach(chip => {
+            const key = chip.dataset.preset;
+            if (key === 'standard') {
+                chip.classList.toggle('active', selectedFret === 0);
+            } else {
+                const config = presets[key];
+                chip.classList.toggle('active', selectedString === config.string && selectedFret === config.fret);
+            }
+        });
+    }
+
+    // 启动/停止音频录制
+    startBtn.addEventListener('click', async () => {
+        if (isListening) {
+            stopTuning();
+        } else {
+            await startTuning();
+        }
+    });
+
+    async function startTuning() {
+        try {
+            // 获取麦克风权限
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 2048; // 保证频率分析精度
+            
+            sourceNode = audioCtx.createMediaStreamSource(stream);
+            sourceNode.connect(analyser);
+
+            isListening = true;
+            startBtn.textContent = '停止调音';
+            startBtn.classList.add('recording');
+            
+            instruction.textContent = '请拨动琴弦...';
+            updateLoop();
+        } catch (err) {
+            alert('麦克风开启失败，请授予麦克风访问权限后再试。');
+            console.error(err);
+        }
+    }
+
+    function stopTuning() {
+        isListening = false;
+        startBtn.textContent = '开启麦克风调音';
+        startBtn.classList.remove('recording');
+        
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        if (audioCtx) {
+            audioCtx.close();
+        }
+        cancelAnimationFrame(animationId);
+        
+        // 重置 UI
+        freqDisplay.textContent = '--.- Hz';
+        instruction.textContent = '等待声音输入...';
+        instruction.style.color = 'var(--text-secondary)';
+        meterPointer.style.left = '50%';
+        meterPointer.style.backgroundColor = 'var(--text-secondary)';
+        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    }
+
+    const bufferLength = 2048;
+    const dataArray = new Float32Array(bufferLength);
+
+    function updateLoop() {
+        if (!isListening) return;
+
+        animationId = requestAnimationFrame(updateLoop);
+
+        // 1. 绘制示波器波形
+        analyser.getFloatTimeDomainData(dataArray);
+        drawWaveform(dataArray);
+
+        // 2. 测算实时频率 (自相关算法)
+        const sampleRate = audioCtx.sampleRate;
+        const pitch = autoCorrelate(dataArray, sampleRate);
+
+        if (pitch !== -1 && pitch > 50 && pitch < 1000) { // 过滤不属于吉他基音范围的杂音
+            freqDisplay.textContent = `${pitch.toFixed(1)} Hz`;
+            evaluateTuning(pitch);
+        } else {
+            // 如果信号太弱，保留前一个状态，但不持续大幅跳动
+        }
+    }
+
+    // 绘制音频时域波形（实时可视化反馈）
+    function drawWaveform(data) {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        
+        ctx.clearRect(0, 0, width, height);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.8)'; // 主青色
+        ctx.beginPath();
+
+        const sliceWidth = width / bufferLength;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const v = data[i] * 1.5; // 适当放大波形
+            const y = (v + 1) * height / 2;
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            x += sliceWidth;
+        }
+
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+    }
+
+    // 经典自相关 pitch 检测算法
+    function autoCorrelate(buffer, sampleRate) {
+        let size = buffer.length;
+        let rms = 0;
+
+        for (let i = 0; i < size; i++) {
+            const val = buffer[i];
+            rms += val * val;
+        }
+        rms = Math.sqrt(rms / size);
+        
+        if (rms < 0.015) { // 噪声门限，声音太小则忽略
+            return -1;
+        }
+
+        let r1 = 0;
+        let r2 = size - 1;
+        const thres = 0.2;
+        for (let i = 0; i < size / 2; i++) {
+            if (Math.abs(buffer[i]) < thres) { r1 = i; break; }
+        }
+        for (let i = size - 1; i >= size / 2; i--) {
+            if (Math.abs(buffer[i]) < thres) { r2 = i; break; }
+        }
+
+        const slicedBuffer = buffer.slice(r1, r2);
+        const slicedSize = slicedBuffer.length;
+
+        const correlations = new Float32Array(slicedSize);
+        for (let i = 0; i < slicedSize; i++) {
+            for (let j = 0; j < slicedSize - i; j++) {
+                correlations[i] += slicedBuffer[j] * slicedBuffer[j + i];
+            }
+        }
+
+        let d = 0;
+        while (correlations[d] > correlations[d + 1]) d++;
+        
+        let maxval = -1;
+        let maxpos = -1;
+        for (let i = d; i < slicedSize; i++) {
+            if (correlations[i] > maxval) {
+                maxval = correlations[i];
+                maxpos = i;
+            }
+        }
+
+        let T0 = maxpos;
+        const x1 = correlations[T0 - 1];
+        const x2 = correlations[T0];
+        const x3 = correlations[T0 + 1];
+        const a = (x1 + x3 - 2 * x2) / 2;
+        const b = (x3 - x1) / 2;
+        
+        if (a) T0 = T0 - b / (2 * a);
+
+        return sampleRate / T0;
+    }
+
+    // 比较当前频率并提供实时反馈
+    function evaluateTuning(freq) {
+        // 计算音分(Cents)偏差：1200 * log2(实际/目标)
+        const cents = 1200 * Math.log2(freq / targetFreq);
+        
+        // 映射 cents [-50, 50] 范围到指示条的百分比位置 [0%, 100%]
+        let percent = ((cents + 50) / 100) * 100;
+        percent = Math.max(0, Math.min(100, percent)); // 限制范围 0~100
+
+        meterPointer.style.left = `${percent}%`;
+
+        const threshold = 5; // ±5 音分以内视为准确
+
+        if (Math.abs(cents) <= threshold) {
+            // 音准正确
+            instruction.textContent = "音准完美！保持住 👍";
+            instruction.style.color = "var(--success)";
+            meterPointer.style.backgroundColor = "var(--success)";
+        } else if (cents < -threshold) {
+            // 音偏低
+            instruction.textContent = "偏低 ⬆️ 请拧紧一点";
+            instruction.style.color = "var(--warning)";
+            meterPointer.style.backgroundColor = "var(--warning)";
+        } else {
+            // 音偏高
+            instruction.textContent = "偏高 ⬇️ 请拧松一点";
+            instruction.style.color = "var(--danger)";
+            meterPointer.style.backgroundColor = "var(--danger)";
+        }
+    }
+</script>
+
+</body>
+</html>
