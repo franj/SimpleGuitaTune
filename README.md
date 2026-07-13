@@ -6,7 +6,7 @@
 
 ## 🔗 在线使用
 
-👉 [**点击此处直接运行调音器**](https://franj.github.io/SimpleGuitaTune/index.html)
+👉 [**点击此处直接运行调音器**](https://franj.github.io/SimpleGuitaTune)
 
 ---
 
